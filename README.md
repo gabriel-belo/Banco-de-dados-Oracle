@@ -129,3 +129,20 @@ END;
 <h3>Controle de transação</h3>
 Uma trnasação consiste em uma ou mais intruções SQL, as quais, quando executas, podem ser consideradas como uma única  unidade. O que significa que se uma instrução de transição falhar, a transação inteira falha 
 Ele funciona para situações em que necessitamos que ou funcione todas as transações ou nenhuma
+
+
+<h1>CAP 2- ESTRUTURA DE CONTROLE</h1>
+<h3>Tipos de dados</h3>
+
+Para fazer modificação no tipo de dado de uma coluna usamos
+ALTER TABLE tabela1
+MODIFY com1 VARCHAR2(30);
+
+Porém caso a tabela tenha uma cokuna maior do que o tamanho definido para a variável no bloco PL/SQL ocorrera um erro
+
+Uma forma de evitar este problema é declararmos a variável com o atributo %TYPE
+Utilizando o %TYPE dizemos que queremos que uma variavel tenha um tipo de dado similar ao presente em outro lugar
+Exemplo:
+v_col1 tabela1.col1%TYPE
+
+<h3>Estruturas de seleção</h3>
