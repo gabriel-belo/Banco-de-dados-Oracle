@@ -146,3 +146,150 @@ Exemplo:
 v_col1 tabela1.col1%TYPE
 
 <h3>Estruturas de seleção</h3>
+As estruturas de controle permitem que o desenvolvedor estabeleça o fluxo lógico de instruções que serão executadas.
+
+As estruturas de seleção possibilitam que o fluxo de processamento das instruções PL/SQL seja direcionado de acordo com a condição especificada.
+
+Três maneiras de utilizar a instrução IF:
+<ul>
+	<li>IF THEN</li>
+	<li>IF THEN ELSE</li>
+	<li>IF THEN ELSIF</li>
+</ul>
+
+Como usar o IF THEN:
+IF (condição) THEN
+	conjunto de instruções;
+END IF;
+
+A condição pode receber como resultado TRUE, FALSE e NULL porém só será executada se receber TRUE como resposta
+As instruções podem receber comandos SQL ou PL/SQL. Podem incluir mais instruções IF contendo diversos IFs, ELSEs e ELSIF aninhados
+
+Pode usar qualquer quantidade de ELSIF, mas só pode haver, no máximo uma cláusula ELSE
+
+<h3>Utilizando IF THEN ELSE</h3>
+IF (condição) THEN
+	conjunto de instruções 1;
+ELSE
+ 	conjunto de instruções 2;
+END IF;
+
+<h3>IF THEN ELSIF</h3>
+IF (condição1) THEN
+	conjunto de instruções 1;
+ELSIF (condição2)
+ 	conjunto de instruções 2;
+ELSE
+	conjunto de intdtruções n;
+END IF;
+
+
+<h3>AND e OR</h3>
+Para testar mais de uma condição dentro de uma estrutura de decisão podemos usar os operadores lógicos AND e OR.
+Exemplo usando AND
+DECLARE 
+	v_tamanho NUMBER(3);
+ BEGIN
+ 	SELECT LENGTH(col1) INT v_tamanho
+  	FROM tabela1
+   IF v_tamanho > 25 AND TO_CHAR(SYSDATE, 'YYYY') > 1999 THEN
+   	DBMS_OUTPUT.PUT_LINE('Maioe que 25 bytes e século XXI')
+    END IF;
+END;
+/
+
+Exemplo usando OR:
+DECLARE 
+	v_tamanho NUMBER(3);
+ BEGIN
+ 	SELECT LENGTH(col1) INT v_tamanho
+  	FROM tabela1
+   IF v_tamanho > 25 ORTO_CHAR(SYSDATE, 'YYYY') > 1999 THEN
+   	DBMS_OUTPUT.PUT_LINE('Maioe que 25 bytes e século XXI')
+    END IF;
+END;
+/
+
+Também temos o operador NOT que modifica o TRUE para FALSE e vise versa, porém o NULL continua NULL.
+
+<h3>ESTRUTURA DE REPETIÇÂO</h3>
+Utilizados para que algo seja executado repetidas vezes.
+Nem todas as estruturas de repetição possuem resursos para fazer contagem do número de vezes que o laço deverá ser repetido, nessas situações, deve-se utilizar uma variável de apoio sempre do tipo int
+
+Tipos de loop:
+<ul>
+	<li>Loop básico: para fornecer ações repetitivas sem condições gerais</li>
+	<li>Loop FOR: para fornecer controle iterativo para ações com base em uma contagem </li>
+	<li>Loop WHILE: Para fornecer controle iterativo para ações com base em uma condição</li>
+</ul>
+
+<h3>Loop básico</h3>
+Exemplo:
+LOOP
+	conjunto de instruções;
+ 	EXIT [WHEN condição]
+END LOOP;
+
+<h3>LOOP FOR</h3>
+O LOOP FOR realiza as iterações de acordo com a instrução de controle que precede a palavra-chave LOOP.
+FOR contador in [REVERSE] num_inicial..num_final LOOP
+	conjunto de instruções;
+ 	. . .
+END LOOP;
+
+O REVERSE serve para fazer o contador decrescer a cada iteração a partir do limite superior até o limite inferior. É importante notar que o limite inferior ainda é referenciado primeiro.
+
+Exemplo:
+BEGIN
+	FOR i IN 1..10 LOOP
+ 		INSERT INTO tabela1
+   		VALUES('Inserindo texto numero' || i)
+     END LOOP;
+END;
+/
+
+Os limites superior e inferior da faixa do LOOP podem ser literais, variáveis ou expressões, mas devem ser avalisados para inteiros.
+
+<h3>LOOP WHILE</h3>
+Pode ser usado para repetir uma senquencia de instruções até que a condição para controle não seja verdadeira.
+
+WHILE condição LOOP
+	 conjunto de instruções 
+  	. . .
+END LOOP;
+
+Se a condição produzir NULL, o LOOP será ignorado e o controle passará para a próxima instrução
+
+Exemplo: 
+DECLARE
+  v_contador NUMBER(2) :=1; 
+BEGIN   
+  WHILE v_contador <= 10 LOOP
+    INSERT INTO tabela1
+    VALUES ('Inserindo texto numero ' || v_contador);
+    v_contador := v_contador + 1;   
+  END LOOP;
+END;
+
+<h3>LOOP ANINHADO</h3>
+É possível aninhar loops básicos, for e while em dentro do outro.
+Exemplo:
+BEGIN   
+  <<loopexterno>>
+  FOR i IN 1..3 LOOP
+    <<loopinterno>>   
+    FOR j IN 1..5 LOOP
+        INSERT INTO tabela1
+        VALUES ('Inserindo texto numero ' || i || j);
+    END LOOP loopexterno;
+  END LOOP loopexterno;
+END;
+/
+
+Para adicionar comentários e ter um código mais intuitivo podemos utilizar um LABEL <<LABEL>>
+ 
+<h1>COMANDO APRENDIDOS</h1>
+<ul>
+	<li>SUM() faz a soma </li>
+	<li>LENGTH() calcula o comprimento</li>
+</ul>
