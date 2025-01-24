@@ -288,7 +288,7 @@ END;
 
 Para adicionar comentários e ter um código mais intuitivo podemos utilizar um LABEL <<LABEL>>
 
-<h1>CAP 1- CURSORES</h1>
+<h1>CAP 3- CURSORES</h1>
 
 <h3>Tipos de dados</h3>
 Para não precisar criar uma variavel para cada coluna e utiliza o %TYPE cada vez que criar uma variavel, podemos usar o atributo %ROWTYPE
