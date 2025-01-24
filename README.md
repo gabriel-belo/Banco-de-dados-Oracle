@@ -287,9 +287,84 @@ END;
 /
 
 Para adicionar comentários e ter um código mais intuitivo podemos utilizar um LABEL <<LABEL>>
+
+<h1>CAP 1- CURSORES</h1>
+
+<h3>Tipos de dados</h3>
+Para não precisar criar uma variavel para cada coluna e utiliza o %TYPE cada vez que criar uma variavel, podemos usar o atributo %ROWTYPE
+O atributo %ROWTYPE fornece um tipo de registro que representa uma linha de uma tabela em um banco de daods relacional. O registro pode armazenar uma linha inteira dos dados, esses podem ser selecionados de uma tabela ou obtidos de um CURSOR ou de uma variavel de CURSOR
+*É importante salientar que os campos em um registro definido por %ROWTYPE não herdam as restrições (CONSTRAINTS) e seus valores padrões
+A variável não terá as mesmas restrições que a tabela possui e a variável também não herda o valor padrão caso tenha.
+
+Exemplo: 
+SET SERVEROUTPUT ON
+
+DECLARE
+  emprec emp%ROWTYPE;
+
+BEGIN
+SELECT *
+  INTO emprec
+  FROM emp
+ WHERE empno = 7839;
+ DBMS_OUTPUT.PUT_LINE ('Codigo   = ' || emprec.empno);
+ DBMS_OUTPUT.PUT_LINE ('Nome     = ' || emprec.ename);
+ DBMS_OUTPUT.PUT_LINE ('Cargo    = ' || emprec.job);
+ DBMS_OUTPUT.PUT_LINE ('Gerente  = ' || emprec.mgr);
+ DBMS_OUTPUT.PUT_LINE ('Data     = ' || emprec.hiredate);
+ DBMS_OUTPUT.PUT_LINE ('Sala     = ' || emprec.sal);
+ DBMS_OUTPUT.PUT_LINE ('Comissao = ' || emprec.comm);
+ DBMS_OUTPUT.PUT_LINE ('Depart.  = ' || emprec.deptno);  
+END;
+/
+
+<h3>Tipos de cursores</h3>
+Ao processar uma instrução de SQL, o banco de dados Oracle atribui uma área de trabalho na memória para a execução da instrução SQL. Essa área de memória é denominada área de contexto ou área SQL privada(Private SQL area). Está área armazena informações necessárias para executar a instrução SQL.
+Na área de contexto podemos encontrar: O número de linhas processadas, um apontador e, no caso de consultas, o conjunto ativio
+
+O CURSOR é o apontador da àrea de contexto. Um CURSOR permite que nomeie uma instrução SQL, acesse a informação em sua área de contexto e, até certo ponto, controle seu processamento
+
+Existem dois tipos de CURSORES> Cursores Implícitos e Cursores Explícitos
+
+<h3>Cursor Implícito</h3>
+Um cursor implícito não é declarado, é criado sem a intervenção do usuário para todas as instruções de defimição dos dados (DDL), manipulação dos dados(DML) e instruções SELECT ... INTO que retornam apenas uma linha.  Se a consulta retornar mais de uma linha dentro do bloco PL/SQL, um erro será gerado, para corrigir esse erro, declare um cursor 
+Quando estamos utilizando um cursor implícito e queremos chamar ele utilizamos o termo padrão SQL
+
+<h3>CURSOR EXPLÍCITO</h3>
+Um Cursor explícito deve ser declarado explicitamente na área declarativa (DECLARE) do bloco PL/SQL. Ao usarmos um cursor explícitio, podemos processar várias linhas, controlar a área de contexto e os processor que nela ocorrem
+
+O conjunto retornado pelo cursor explícito é denominado de conjunto ativo. O tamanho de um conjunto ativo depende da quantidade das linhas em uma tabela que atendam às condições aplicadas em uma consulta. O cursor explícito identifica a linha que está sendo processada no momento, esta é chamada de linha atual.
+
+EXEMPLO:
+DECLARE
+	CURSOR cursor_emp IS
+ 	SELECT deptno, SUM(sal) #SUM(sal)= soma do salário de todas as pessoas do departamento 
+  	FROM emp
+   	GROUP BY deptno;
+BEGIN
+	OPEN cursor_emp;
+ END;
+ /
+
+Instrução FETCH para recuperar os daods do conjunto ativo, uma de cada vez. A cada extração, o Cursor avança para a próxima linha no conjunto ativo.
  
 <h1>COMANDO APRENDIDOS</h1>
 <ul>
 	<li>SUM() faz a soma </li>
 	<li>LENGTH() calcula o comprimento</li>
+	<li>ROLLBACK desfaz a ação, é como um retornar no word</li>
+</ul>
+
+<h1>COMANDO PARA USAR NOS CURSORES</h1>
+<ul>
+	<li>%FOUND retorna verdadeiro caso alguma linha(tupla) tenha side afetada</li>
+	<li>%ISOPEN retorna verdadeiro caso o CURSOR esteja aberto</li>
+	<li>%NOTFOUND retorna verdadeiro caso não tenha encontrado nenhuma tupla(linha)</li>
+	<li>%ROWCOUNT retorna o número de tuplas(linhas) do CURSOR</li>
+</ul>
+
+<h1>Comando dos cursores implícitos</h1>
+<ul>
+	<li>%BULK_ROWCOUNT</li>
+	<li>%BULK_EXCEPTION</li>
 </ul>
