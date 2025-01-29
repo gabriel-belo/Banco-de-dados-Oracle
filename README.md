@@ -337,7 +337,7 @@ O conjunto retornado pelo cursor explícito é denominado de conjunto ativo. O t
 
 EXEMPLO:
 DECLARE
-	CURSOR cursor_emp IS
+	CURSOR cursor_emp IS 
  	SELECT deptno, SUM(sal) #SUM(sal)= soma do salário de todas as pessoas do departamento 
   	FROM emp
    	GROUP BY deptno;
@@ -346,7 +346,54 @@ BEGIN
  END;
  /
 
-Instrução FETCH para recuperar os daods do conjunto ativo, uma de cada vez. A cada extração, o Cursor avança para a próxima linha no conjunto ativo.
+Instrução FETCH para recuperar os dados do conjunto ativo, uma de cada vez. A cada extração, o Cursor avança para a próxima linha no conjunto ativo.
+
+Recuperação de linhas do cursor
+Através do comando FETCH nós iremos carregar os dados do conjunto, uma linha de cada vez. Após cada extração, o CURSOR avança para apróxima linha no conjunto ativo.
+
+Deve-se incluir o mesmo número de variáveis na claúsula INTO da instrução FETCH do que as colunas na instrução SELECT, as variáveis devem ser do mesmo tipo de dado da coluna correspondente 
+A instrução FETCH deve ser executada até que todas as linhas de dados sejam extraídas.
+
+Para fechar o cursor usamos o comando CLOSE nome_cursor;
+
+<h3>LOOPS DE CURSOR FOR</h3>
+Base de exemplo:
+FOR nome_registro(variavel temporaria que ira carregar este cursor)  IN nome_cursor LOOP
+	instruções;
+ END LOOP;
+
+Usado um CURSOR FOR o CURSOR é aberto automaticamente, sem necessidade de declará-lo e abri-lo automaticamente.
+Durante a repetição do LOOP, os dados são extraídos e processados um a um. Assim que todas as linhas(tuplas) disponíveis forem processadas, o loop termina automaticamentee o cursor é fechado sem que precise executar os comandos em linha 
+Não é necessário utilizar o %ROWTYPE pois o loop for já ira criar a variável.
+
+<h3>LOOPS FOR DE CURSOR USANDO SUBCONSULTA</h3>
+O CURSOR pode ser substituído por uma subconsulta dentro do loop FOR. Não será possível fazer referência aos atrivutos de CURSOR explícito se usar uma subconsulta em um loop FOR de CURSOR, pois não poderá dar um nome explícito
+No exemplo a baixo iremos eliminar a sessão declarativa, tanto registro como o CURSOR são definidos dentro do LOOP FOR
+exemplo: 
+
+<h3>CURSORES DE ATUALIZAÇÃO</h3>
+Utilizando o FOR UPDATE faz com que as linhas específicas de uma tabela sejam bloqueadas para garantir que nenhuma alteração será efetuada nessas linhas após lê-las e serem alocadas no conjunto ativo
+Usamos o comando UPDATE para atualizar
+Utilizando o WHERE CURRENT OF podemos fazer a atualização para cada linha de forma específica, sem ocorrer uma atualização instântanea e dar um erro na atualização dos dados. Será atualizada a linha que foi previamente buscada pelo FETCH.
+O comando NOWAIT diz ao Oracle que não aguarde, se as linhas solicitadas foram bloqueadas por outro usuário
+Exemplo:
+DECLARE
+  emprec emp%ROWTYPE;   
+  CURSOR cursor_emp IS 
+         SELECT empno, sal             
+          FROM emp
+            FOR UPDATE; 
+BEGIN
+   OPEN cursor_emp;
+   LOOP
+      FETCH cursor_emp INTO emprec.empno, emprec.sal;
+      EXIT WHEN cursor_emp%NOTFOUND;
+      UPDATE emp SET sal = sal * 1.05 WHERE CURRENT OF cursor_emp;
+   END LOOP;
+   CLOSE cursor_emp;
+END;
+/
+
  
 <h1>COMANDO APRENDIDOS</h1>
 <ul>
