@@ -415,3 +415,175 @@ END;
 	<li>%BULK_ROWCOUNT</li>
 	<li>%BULK_EXCEPTION</li>
 </ul>
+
+
+<h1>CAP 4- INTRODUÇÃO AOS OBJETOS COMPILADOS NO ORACLE RDBMS</h1>
+<h3>Dicionário de dados</h3>
+Um dicionário de dados é um conjunto de Metadados(Dados que descrevem outros dados. Fornecem informações sobre estrutura, formato e conteúdo de um conjunto de dados), que são dados sobre dados. O dicionário de dados fornece uma descrição sobre o banco de dados , temos informações sobre a estrutura física, lógica e seu conteúdo. Consiste numa série de tabelas  e views.
+
+Existem três tipos de views que permitem a consulta do dicionário de dados:
+<ul>
+	<li>As views USER_ fornecem informações sobre os objetos de propriedade do usuário conectado, Exemplo: Se logar como aluno, ao executar a query(SELECT * FROM USER_OBJECTS) obterá informações sobre os objetos que você criou.</li>
+	<li>As views ALL_ fornecem informações sobre os objetos a que o usuário tem acesso. Exemplo: Se quiser ver os objetos a que você tem acesso (incluindo os que pertencem a outros usuários) use a query (SELECT * FROM ALL_TABLES)</li>
+	<li>As views DBA_ são de acesso exclusivo dos administradores do banco de dados e fornecem informações de todos os objetos do banco de dados. Exemplo: Um administrador pode executar a seguinte query(SELECT * FROM DBA_TABLES) para ver todas as tabelas do banco de dados.</li>
+</ul>
+
+Exemplos: 
+1º Serão listados todos os tipos de objetos criados pelo usuário conectadp no momento, usamos o comando DISTINCT para eliminar duplicidade dos objetos nessa listagem.
+SELECT DISTINCT object_type
+FROM user_objects;
+
+2º Serão listados todos os tipos de objetos a que o usuário conectado no momento de acesso.
+SELECT DISTINCT object_type
+FROM all_objects;
+
+<h3>Objetos PL/SQL armazenados</h3>
+Os objetos PL/SQL armazenados são procedimentos, gatilhos, funções e pacotes. Todos esses objetos são armazenados no dicionário de dados com o seu código-fonte e com a sua compilação. Toda vez que um objeto PL/SQl armazenado é chamado por uma sessão é lido a partir  do dicicionário de dados ou, caso tenha sido executado anteriormente e estiver disponível, a partir da memória CACHE(é uma memória de armazenamentop temporário que armazena informações que são frequentemente acessadas visando acelerar processo de leitura e execução. É um atalho que o sistema usa para acessar dados já utilizados.)
+
+Blocos PL/SQl anônimos são programas PL/SQl não-nomeados e cujo o código não fica armazenado no banco de dados (estes foram os utilizados até agora). A desvantagem de utilizar blocos anônimos é que precisam ser compilados toda vez que vão ser executados e não podem ser chamados por outras aplicações. Se quier reexecutar um bloco PL/SQL anônimo, é necessário executar o SCRIPT com o bloco anônimo novamente. 
+
+Ao usarmos blocos PL/SQL nomeados temos vantagens como: procedimentos e funções são armazenados no banco de dados em formato compilado, e haverá necessidade de recompilar o código caso ocorram modificações no código ou em seus objetos dependentes. Outra vantagem é  que outras aplicações e/ou usuários podem executá-las, desde que possuam os previlégios e autorizações para tal. Além disso, podemos passar parâmetros para os programas e, no caso das funções, podemos obter um retorno.  
+
+Existem view com informações sobre os objetos
+
+<h3>Exibir informações sobre os objetos armazenados</h3>
+Cada linha da view user_object contém informações dos seus objetos do banco de dados
+Exemplo:
+SELECT object_name
+FROM user_objects
+WHERE object_type= "TABLE"
+ORDER BY object_name
+/
+No exemplo recebemos uma listagem com o nome de todos os objetos do tipo TABLE pertencentes ao usuário que está executando a consulta. Para obter uma listagem com o nome de todos os objetos do tipo TABLE que o usuário que está executando a consulta possui acesso, basta substituir o nome da view USER_OBJECTS por ALL_OBJECTS
+O ORDER BY é usado para ordenar os resultados em uma consulta, define a sequência em que os registros serão exibidos na saída. A ordem padrão é do menor para o maior, isso significa que os resultados serão organizados primeiro por object_type no caso do exemplo.
+O WHERE é como um filtro. 
+
+O STATUS de um programa PL/SQL armazenado é definido como INVALID quando o objeto do qual é dependente é alterado. Os programas com o STATUS de INVALID devem ser recompilados. A recompilação pode ser feita manualmente ou automaticamente. A automática será feita na próxima vez que o banco de dados tentar executar o programa 
+
+
+<h3>Exibir informações sobre o código-fonte</h3> 
+O código-fonte de todos os programas PL/SQL que foram compilados com sucesso estão disponíveis por meio do view USER_SOURCE. 
+Podemos obter várias informações significativas, por exemplo:
+<ul>
+	<li>Descobrir quais programas usam um determinado valor literal que precisa ser alterado</li>
+	<li>Verificar se os padrões de nomes de variáveis da empresa estão sendo obedecidos </li>
+	<li>Encontrar todos os programas PL/SQL que chama um determinado procedimento e/ou função e/ou pacote</li>
+</ul>
+
+Exemplo:
+SELECT name, line, text
+FROM user_source
+WHERE UPPER(text)
+LIKE '%DEPT%'
+ORDER BY name, line
+/
+
+O exemplo fornece uma listagem com o nome do programa, número da linha e o texto do código-fonte que trabalha com a tabela DEPT. Como é um texto, o exemplo também pode retornar linhas comentadas que possuam a palavra DEPT ou variáveis que possuam a palavra  DEPT em seu nome.
+
+<h3>Exibir informações sobre procedimentos e funções</h3>
+As informações sobre os procedimentos efunções criadaqs pelo usuário podem ser obtidas por meio da view USER_PROCEDURES
+Exemplo:
+SELECT object_name, procedure_name
+FROM user-procedures
+WHERE authid= 'CURRENT_USER'
+ORDER BY object_name, procedure_name
+/
+Fornece uma listagem com o nome do objeto e o nome das funções e procedimentos que serão executados usando os privilégios de execução do usuário que executa o programa
+
+<h3>Exibir informações sobre gatilhos (TRIGGERS)</h3>
+As informações sobre os gatilhos(TRIGGERS)(gatilhos são como alarmes programados dentro de um banco de dados. Eles são usados para executar automaticamente ações específicas em resposta a certos eventos que ocorrem em uma tabela) podem ser obtidas por meio da view USER_TRIGGERS
+
+SELECT * FROM user_triggers
+WHERE status= 'DISABLED'
+/
+Fornece uma listagem com informação sobre todos os gatilhos desabilitados criado pelo usuário conectado ao banco de dados.
+
+SELECT * 
+FROM user_triggers
+WHERE table_name= 'EMP'
+AND trigger_type LIKE '%EACH ROW'
+/
+Fornece uma listagem com informações sobre todos os gatilhos associados à tabela EMP e que são executados em nível de linha 
+
+<h1>CAP 5- Tratamento de exceções</h1>  
+Os erros podem ocorrer durante a compilação ou durante a execução do programa. Os erros de compilação estão associados à sintaxe  das instruções. Neste tipo de erro o compilador da linguagem informa ao programador durante a tentativa de executar uma instrução a ocorrência do erro 
+ 
+Erros em tempo de execução que também são conhecidos como erros de RUNTIME, estão associados à utilização do programa. Nesse caso, quando as exceções não são previstas entartadas, o erro gerado interrompe o processamento e uma mensagem de erro é devolvida para a aplicação
+
+Uma exceção é, na verdade, uma ocorrência não esperada ou diferente daquela programada para ser executada, ou seja, uma exceção é um erro
+
+A estrutura da seção de tratamento de exceções:
+EXCEPTION
+WHEN exceção1 [OR exceção2 ...] THEN
+	comando1;
+ 	comando2;
+  	...
+[WHEN exceção3 [OR exceção4 ...] THEN
+	comando1;
+ 	comando2;
+...]
+
+[WHEN OTHERS THEN
+	comando1;
+ 	comando2;
+
+EXCEPTION indica o início da seção de tratamento
+WHEN filtra quais exceções devem receber quais comandos 
+Podemos utilizar o OR para adicionar mais de uma exceção a um filtro 
+O OTHERS indica uma cláusula de tratamento de exceções opcional que intercepta qualquer exceção que não foi explicitamente tratada
+
+<h3>Exceções predefinidas nomeadas</h3>
+
+O PUTLINE é utilizado no momento de desenvolvimento do código, utilizamos tabela para armazenar as informações quando estamos na aplicação
+
+O oracle predefiniu exceções para alguns erros mais comuns. Nesses casos, não existe a necessidade de as exceções serem declaradas para serem utilizadas, elas fazem parte do pacote STANDARD.   
+Nós utilizamos uma tabela para armazenar os erros nela guardamos por linhas as informações(usurario, data, codigo do erro e msg do erro) para que depois possamos ver os erros e arrumarmos. 
+As exceções não podem aparecer em instruções de atribuição ou instruções SQL.
+
+<h3>Funções para a captura de erro</h3>
+Quando ocorre uma exceção, pode-se identificar o código ou a mensagem de erro associado usando duas funções SQLCODE e SQLERRM e com base nos valores do código ou mensagem, pode-se decidir qual a ação subsequente a tomar a partir do erro.
+SQLERRM é uma função que retorna a memsagem de erro associada a um código de erro numérico, enquanto SQLCODE tetorna o código numérico de uma exceção
+Usamos a função SUBSTR para truncar o tamanho da mensagem de erro para um tamanho conhecido, que é definido na função
+Exemplo:
+SUBSTR(SQLERRM, 1, 100)
+
+Valores que podem ser assumidos pelo SQLCODE.
+<ul>
+	<li>Valor 0: nenhuma exceção encontrada</li>
+	<li>Valor 1: Exceção definida pelo usuário</li>
+	<li>Valor +100: Exceção NO_DATA_FOUND</li>
+	<li>Valor número negativo: Número de erro do servidor Oracle</li> 
+</ul>
+
+<h3>Exceções nomeadas pelo desenvolvedor</h3>
+Uma boa prática para a criação da sua exceção é nomea-la inicialmente por 'e_' 
+
+<h1>CÁP 6- Stroed Procedures</h1>
+Vantagens dos blcos PL/SQL nomeados: procedimentos e funções são armazenados no banco de dados em formato compilado. Caso ocorra mudança nos seus objetos dependentes, haverá necessidade de recompilar o código. Outro benefício é a possibilidade de que outras aplicações e/ou usuários podem executá-los, desde que possuam os privilégios e as autorizações. Além disso podemos passar parâmetros para os programas e, no caso, de funções devolver resultados.
+
+O nome do objeto identifica um procedimento. O nome do procedimento, pacote, função ou corpo do pacote pode ser definido por meio dos comandos CREATE PROCEDURE, CREATE FUNCTION, CREATE PACKAGE ou  CREATE PACKAGE BODY.
+
+O compilador PL/SQL analisa o código-fonte que difitou e produz  uma representação da análise do código-fonte. Essa analise é chamada de PARSE TREE ou árvore de analise
+
+O pseudocódigo ou P-CODE é gerado pelo compilador PL/SQL baseado no código analisado ou PARSED CODE. O PL/SQL executa o P-CODE quando solicitamos a execução do procedimento, função ou pacote.
+
+Tanto a P-CODE quanto a PARSE TREE de um procedimento, função ou pacote são armazenados no banco de dados para evitar que sejam recompilados desnecessariamente. O P-CODE é uma representação do que foi analisado e é otimizado para ser executada de forma eficiente.
+
+O fato do P-CODE estar armazenado no banco de dados permite que seja copiado para a memória CACHE do servidor em uma área denominada de SHARED POOL. A SHARED POOL faz parte de uma área de memória denominada SGA ou SYSTEM GLOBAL AREA.
+
+A versão compilada do código permanece em memória baseada em um algoritmo de LRU, ou LEAST RECENTLY USED, em tradução direta, MENOS RECENTEMENTE USADO. Esse alforitmo garante que os códigos que não estão sendo usados serão descartados da memória.
+
+Os códigos-fonte P-CODE e PARSE TREE são armazenados no dicionário de dados do banco de dados. O dicionário de dados fica armazenado no TABLESPACE SYSTEM do banco de dados. Um TABLESPACE é um nime lógico para um ou mais arquivos físicos do banco de dados.
+
+<h3>O PROCEDIMENTO</h3>
+Um PROCEDURE envolve basicamente os passos de identificação do procedimento, definição dos parâmetros ou parâmetro, definição do conjunto de instruções do procedimento e submissão do código ao SGBDR.
+<h4>O que é o SGBDR</h4>
+Significa Sistema de Gerenciamento de Banco de Dados. É um software que permite criar, gerenciar e interagir com bancos de dados que seguem o modelo relacional, que organiza os dados em tabelas interligadas
+Características de um SGBDR:
+<ul>
+	<li>Estrututura de tabela: Os dados são armazenados em tabelas, que consistem </li>
+	<li></li>
+	<li></li>
+	<li></li>
+	<li></li>
+</ul>
