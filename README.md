@@ -581,9 +581,459 @@ Um PROCEDURE envolve basicamente os passos de identificação do procedimento, d
 Significa Sistema de Gerenciamento de Banco de Dados. É um software que permite criar, gerenciar e interagir com bancos de dados que seguem o modelo relacional, que organiza os dados em tabelas interligadas
 Características de um SGBDR:
 <ul>
-	<li>Estrututura de tabela: Os dados são armazenados em tabelas, que consistem </li>
-	<li></li>
-	<li></li>
-	<li></li>
-	<li></li>
+	<li>Estrututura de tabela: Os dados são armazenados em tabelas</li>
+	<li>Adicionar novos dados: Colocar novos dados no arquivo</li>
+	<li>Consultar dados: Abrir uma pasta para ver o que está escrito</li>
+	<li>Atualizar dados: Como substituir um arquivo antigo para um mais recente</li>
+	<li>Remover dados: Como descartar uma pasta que não é mais necessária</li>
 </ul>
+
+Estrutura de um procedimento:
+CREATE [OR REPLACE] PROCEDURE nome_procedimento
+[parâmetro [in, out, in out] tipo_parâmetro,
+...
+[IS ou AS]
+BEGIN
+corpo_procedimento
+
+END nome_procedimento
+/
+
+Explicação:
+CREATE serve para a criação do procedimento 
+REPLACE para substituição do procedimento
+[parâmetro [in, out, in out] tipo_parâmetro, é o nome do parâmetro e se ele é de entrada, saída ou entrada e saída e seu tipo
+*Os parâmetros são opcionais 
+IS ou AS têm a mesma função e indicam o bloco que estará associado ao procedimento, substitui a palavra reservada DECLARE
+*Porém se quiser declarar uma variável no procedimento utilizamos o DECLARE
+
+Boa práticas ao declarar partes do procedimento:
+<ul>
+	<li>Inicar o nome do procedimento com sp_</li>
+	<li>O nome dos parâmetros devem iniciar com p_ </li>
+</ul>
+
+Para executar a PROCEDURE após ser compilada usamos EXECUTE nome_procedimento(parâmetro);
+
+Quando for compilar uma PROCEDURE e ela não apresentar o erro, podemos utilizar o comando SHOW ERRORS; ou também pode utilizar o dicionário que é o user_errors para pegar as informações caso tenha sido armazenada no dicionario
+
+<h3>Parâmetros</h3>
+Parâmetro é um valor constante ou variável passado de uma rotinha chamadora para uma rotina executadora. Uma rotina chamadora é um algoritmo que usa as funcionalidades da rotina executadora.
+Um parãmetro formal são as variáveis da rotina executadora que recebem os valores da rotinha chamadora, isto é, recebem os parâmetros reais. Normalmente, as variáveis dos parâmetros formais não devem ter tamanho ou precisão predeterminados
+
+<h4>Utilizando parâmetros de entrada</h4>
+Por padrão os parâmetros de um procedimento são do tipo de entrada (IN) 
+EXEMPLO:
+CREATE PROCEDURE sp_reajuste
+(p_codigo_emp IN emp.empno%TYPE,
+p_porcentagem IN number)
+IS
+BEGIN
+UPDATE emp
+    SET sal= sal + (sal*(p_porcentagem/100))
+    WHERE empno = p_codigo_emp;
+    COMMIT;
+END sp_reajuste;
+/
+
+EXECUTE sp_reajuste(7839, 50);
+
+SELECT empno, sal
+FROM emp
+WHERE empno= 7839;
+
+Os parâmetros de entrada (IN) podem receber valores-padrão (DEFAULT).
+Os parâmetros de entrada e saida ou só de saida não deve, receber valores-padrão
+
+<h4>Utilizando parâmetros de saída</h4>
+Os parâmetros de saida(OUT) são utilizados para saída de valores processados para o ambiente de chamada 
+
+Exemplo:
+CREATE OR REPLACE PROCEDURE consulta_emp
+(p_id IN emp.empno%TYPE,
+ p_nome OUT emp.ename%TYPE,
+ p_salario OUT emp.sal%TYPE)
+IS 
+BEGIN
+    SELECT ename, sal INTO
+           p_nome, p_salario
+      FROM emp
+     WHERE empno  = p_id;
+END consulta_emp;
+/
+
+SET SERVEROUTPUT ON
+
+DECLARE
+   v_nome    emp.ename%TYPE;
+   v_salario emp.sal%TYPE;
+BEGIN
+   consulta_emp(7839, v_nome, v_salario);
+   DBMS_OUTPUT.PUT_LINE(v_nome);
+   DBMS_OUTPUT.PUT_LINE(v_salario);
+END;
+/
+
+<h4>Utilizando parâmetros de entra e saída</h4>
+São utilizados para a entrada de valores, que poderão ser processados. O parâmetro poderá ser alterado e o seu valor pode ser devolvido para o ambiente de chamada.
+O parâmetro é de entrada quando passa para o procedimento o valor que será utilizado no processamento e é de saida quando recebe o resultado do processamento e devolve o resultado à rotina chamadora.
+Exemplo:
+CREATE OR REPLACE PROCEDURE formata_fone
+(p_fone IN OUT VARCHAR2)
+IS
+BEGIN
+    p_fone := ' (' || SUBSTR(p_fone, 1, 3) || ') ' || SUBSTR(p_fone, 4, 4) || '- ' || SUBSTR(p_fone, 8);
+END formata_fone;
+/
+SET SERVEROUTPUT ON
+
+DECLARE
+   v_fone VARCHAR2(30) := '01138858010';
+BEGIN
+   Formata_fone(v_fone);
+   DBMS_OUTPUT.PUT_LINE(v_fone);
+END;
+/
+
+<h3> Visualização de erros de compilação</h3>
+Existem várias técnicas para exibir erros de compilação. Uma forma simples é através do comando SHOW ERRORS
+EXEMPLO:
+SHOW ERRORS
+
+Erros para PROCEDURE REAJUSTE:
+
+LINE/COL ERROR
+-------- -------------------------------------------
+8/2      PL/SQL: SQL Statementignored
+10/26    PL/SQL: ORA-00904: nome inválido de coluna
+
+Outra forma é usando a view user_errors
+Exemplo:
+CREATE OR REPLACE PROCEDURE errotst AS
+    v_conta NUMBER;
+BEGIN
+    v_conta := 7
+END errotst;
+/
+
+
+SELECT line, position, text
+  FROM user_errors
+ WHERE name = 'ERROTST'
+ ORDER BY sequence;
+
+ LINE POSITION TEXT
+----- -------- -----------------------------------------------------------
+    5        1 PLS-00103: Encountered the symbol "END" when expecting one of the following:
+                  * & = - + ; < / > at in is mod remainder not rem <an exponent (**)> <> or != or ~= >= <= <> and or like LIKE2_ LIKE4_ LIKEC_ between || multiset member SUBMULTISET_ The symbol ";" was substituted for "END" to continue.
+
+<h3>Passagem de parâmetros</h3>
+Uma forma de passar parâmetros usando uma definição que mostra qual parâmetro vc esta passando um valor
+Exemplo;
+EXECUTE sp_incluir_dept(p_code => 60, p_nome => 'Doze', p_loc => 'RJ');
+
+Formas de chamar o PROCEDURE
+1º EXECUTE sp_incluir_dept;
+
+2º
+BEGIN
+	sp_incluir_dept;
+END;
+/
+
+<h1>CAP 7- Stored Functions</h1>
+O bloco nomeado de uma função é conhecido por vários nomes. Pode ser chamado de função armazenada (stored function) ou função do usuário(user function) ou função definida pelo usuário(user-defined function)
+
+A difenreça entre  o PROCEDURE e a FUNCTIOn está no fato de que as funções tem uma obrigatoriedade de ter um retorno à rotina chamadora, enquanto no procedure não existe essa obrigatoriedade.
+
+<h4>Difenreças entre procedimentos e funções:<h4>
+<h5>Procedimentos</h5>
+<ul>
+	<li>É chamado em uma declaração SQL, blocos PL/SQL ou por uma aplicação</li>
+	<li>Não contém a cláusula RETURN no cabeçalho</li>
+	<li>Pode retorno nenhum, um ou vários valores</li>
+	<li>Pode devolver um retorno a rotina chamadora</li>
+</ul>
+<h5>Função</h5>
+<ul>
+	<li>É chamada como parte de uma expressão</li>
+	<li>Contém cláusula RETURN no cabecalho</li>
+	<li>Retorna somente um valor</li>
+	<li>Retorna obrigatoriamente um valor à rotina chamadora</li>
+</ul>
+
+ * Explicação da frase no procedimento "É chamado em uma declaração SQL, blocos PL/SQL ou por uma aplicação": o procedimento pode ser chamado em uma função SQL como em uma consulta SELECT, ou em blocos PL/SQL ou em aplicações externas  que se conectem ao banco de dados.
+ *Explicação da frase na função: significa qur a função pode ser utilizada dentro de uma expressão maior em uma consulyta ou operação. Por exemplo: chamar uma função enquanto realiza cálculos ou manipulações de dados. Permitindo que os resultados da função sejam incorporados diretamente no contexto em que estejá sendo trbalhado.
+
+Sintaxe da criação de função:
+CREATE [OR REPLACE] FUNCTION nome_função
+([parâmetro [IN] tipo_parametro],...)
+return tipo_do_retorno
+[IS ou AS]
+*pode declarar variaveis(é similar ao DECLARE)
+BEGIN
+	corpo_função
+RETURN v_variavel
+END nome_função;
+/
+
+Por boa prática iniciamos o nome da função com fn_. 
+O IN no parâmetro é opcional. pois só existem parâmetros de entrada
+
+Mesmo não passando parâmetros é necessário adicionar () ao chamar a função 
+
+Método NVL serve para dar um valor a um parâmetro caso ele não receba nenhum valor 
+Exemplo: NVL(p_comm, 0)
+
+Exemplo de aplicação da função:
+CREATE OR REPLACE FUNCTION descobrir_salario
+   (p_id IN emp.empno%TYPE)
+RETURN NUMBER
+IS
+   v_salario emp.sal%TYPE := 0;
+BEGIN
+   SELECT sal INTO v_salario
+     FROM emp
+    WHERE empno = p_id;
+   RETURN v_salario;
+END descobrir_salario;
+/
+
+chamando função:
+SELECT empno, DESCOBRIR_SALARIO(empno)
+  FROM emp;
+
+Netse caso a função será executada para cada linha na coluna
+
+Executando uma função em um bloco anônimo:
+SET SERVEROUTPUT ON
+BEGIN
+	DBMS_OUTPUT.PUT_LINE(DESCOBRIR_SALARIO(7900));
+END;
+/
+
+Criando uma função sem valor de entrada só o valor de retorno
+CREATE OR REPLACE FUNCTION contadept
+RETURN number 
+IS
+	total NUMBER(7) :=0;
+ BEGIN
+	SELECT count(*) INTO total
+ 	FROM dept;
+  	RETURN total;
+ END comntadept;
+ /
+
+Chamando a função:
+SET SERVEROUTPUT ON
+DECLARE
+	conta NUMBER(7);
+BEGIN
+	conta := CONTADEPT();
+ 	DBMS_OUT.PUT_LINE('Quantidade de Departamentos: '|| conta);
+END;
+/ 
+
+CREATE OR REPLACE FUNCTION sal_anual
+( p_sal NUMBER,
+p_comm NUMBER)
+RETURN NUMBER
+IS 
+BEGIN
+	RETURN (p_sal + NVL(p_comm, 0)) *12;
+ END sal_anual;
+ /
+
+ SELECT sal. comm, SAL_ANUAL(sal, comm)
+ FROM emp;
+
+ CREATE OR REPLACE FUNCTION ordinal (
+     p_numero        NUMBER)
+RETURN VARCHAR2
+IS
+BEGIN
+  CASE p_numero
+    WHEN 1 THEN RETURN 'primeiro';     
+    WHEN 2 THEN RETURN 'segundo';     
+    WHEN 3 THEN RETURN 'terceiro';     
+    WHEN 4 THEN RETURN 'quarto';     
+    WHEN 5 THEN RETURN 'quinto';     
+    WHEN 6 THEN RETURN 'sexto';     
+    WHEN 7 THEN RETURN 'sétimo';     
+    WHEN 8 THEN RETURN 'oitavo';     
+    WHEN 9 THEN RETURN 'nono';     
+    ELSE RETURN 'não previsto';
+  END CASE;
+END ordinal;
+/
+
+SET SERVEROUTPUT ON
+BEGIN 
+   FOR i IN 1..9 LOOP 
+       DBMS_OUTPUT.PUT_LINE(ORDINAL(i));
+   END LOOP;
+END;
+/
+
+<h3>Visualização de erros de compilação</h3>
+Caso tenha erros na função durante a compilação recebesse a mensagem "Function created with compilation errors 
+Além do comando SHOW ERRORS, podemos obter mais informações sobre os erros por meio das views USER_ERRORS, ALL_ERRORS, DBA_ERRORS
+Estrutura básica dessas views:
+Name                                 Null?    Type
+------------------------------------ -------- ----------------
+ NAME                                NOT NULL VARCHAR2(30)
+ TYPE                                         VARCHAR2(12)
+ SEQUENCE                            NOT NULL NUMBER
+ LINE                                NOT NULL NUMBER
+ POSITION                            NOT NULL NUMBER
+ TEXT                                NOT NULL VARCHAR2(4000)
+ ATTRIBUTE                                    VARCHAR2(9)
+ MESSAGE_NUMBER                               NUMBER 
+
+
+Exemplo de cinsulta:
+SELECT line, position, text
+FROM user_errors
+WHERE name= 'ORDINAL'
+ORDER BY sequence;
+
+No exemplo, estamos exibindo linha, coluna e mensagem de erro na função ORDINAL
+
+<h3>Aprendizados no teste sua proficiência</h3>
+Pode chamar uma função assim: total:= SAL_ANUAL(900,100);
+
+
+<h1>CAP 8- Packages</h1>
+Após criarmos todos os procedimentos(procedures) e funçôes(functions), devemos agrupar todos em pacotes. Uma de suas vantagens é a organização das aplicações com mais eficiência. Com o pacote podemos agrupar todos como um só objeto.
+
+<h3>Definição de pacotes</h3>
+É a área de armazenamento dos procedimentos, funções, constantes,variaveis e cursores em PL/SQL. Que dependendo do modo que construir, compartilharão as informações desse PACKAGE com outros aplicativos. Habilitam o Oracle a ler múltiplos objetos de pacote na memória de uma única vez e podem conter vavriáveis globais e cursores que estão disponíveis para todos os procedimentos e funções em um pacote. 
+Os pacotes também facilitam a tarefa de conceder privilégios para usuários e grupo de usuários executarem suas tarefas.
+Explicação da frase " permitem que os objetos do pacote sejam modificados sem que os objetos de esquema dependentes precisam ser recompilados ": Com um pacote PL/SQL, você pode mudar a maneira como algumas partes do pacote funcionam(como procedimentos ou funções) sem precisar alterarou recompilar todas as outras partes que dependenm deste pacote. Isto é muito útil, pois uma atualização ou correção em um procedimento dentro do pacote, outras partes do seu sistema que usam esse procedimento continuarão funcionando normalmente, desde que a interface(especificação do pacote) permaneça a mesma. 
+
+Um pacote possui duas partes. A primeira parte é chamada de especificação de pacote ou package especification e a segunda parte é denominada de corpo do pacote ou package body. A especificação declara tudo que fará parte do pacote, e o corpo, por sua vez, apresentará o conteúdo do pacote propriamente dito
+
+<h4>Sintaxe da especificação dos pacotes:</h4>
+CREATE [ OR REPLACE ] PACKAGE nome_pacote
+{IS ou AS}
+
+[ variáveis ]
+
+[ especificação dos cursores ]
+
+[ especificação dos módulos ]
+
+END [nome_pacote ];
+
+O nome do pacote tem como padrão iniciar com pg_, pk_ ou pkg_ 
+Também temos o padrão de colocar constantes em caixa alta exemplo:C_FONE 
+As variáveis é a especificação do nome das variáveis, objetos públicos, tipos públicos e exceções.
+
+O que é definido na especificação do pacote poderá ser compartilhado com outros scripts ou programas SQL ou PL/SQL.
+
+<h3>Package specification</h3>
+ 
+Exemplo:
+CREATE OR REPLACE PACKAGE faculdade AS
+    cnome CONSTANT VARCHAR2(4) := 'FIAP';
+    cfone CONSTANT VARCHAR2(13) := '(11)3385-8010';
+    cnota CONSTANT NUMBER(2) := 10;
+END faculdade;
+/
+
+utilizando o pacote:
+SET SERVEROUTPUT ON
+DECLARE
+ melhor VARCHAR2(30);
+BEGIN
+  melhor := faculdade.cnome || ', a melhor faculdade';
+  dbms_output.put_line(melhor);
+END;
+/
+
+
+Exemplo com definição de função e procedimento:
+
+CREATE OR REPLACE PACKAGE rh as
+    FUNCTION descobrir_salario 
+      (p_id IN emp.empno%TYPE) 
+      RETURN NUMBER;
+    PROCEDURE reajuste
+      (v_codigo_emp IN emp.empno%type,
+       v_porcentagem IN number DEFAULT 25);
+END rh;
+/
+
+Podemos obter a descrção dos parâmetros de entrada através do comando DESC
+Exemplo:
+DESC rh
+FUNCTION DESCOBRIR_SALARIO RETURNS NUMBER
+ Argument Name      Type       In/Out Default?
+ ------------------ ---------- ------ --------
+ P_ID               NUMBER(4)  IN
+PROCEDURE REAJUSTE
+ Argument Name      Type       In/Out Default?
+ ------------------ ---------- ------ --------
+ V_CODIGO_EMP       NUMBER(4)  IN
+ V_PORCENTAGEM      NUMBER     IN     DEFAULT
+
+<h3>Body specification</h3>
+Sintaxe do body specification:
+CREATE [ OR REPLACE ] PACKAGE BODY nome_pacote
+{IS ou AS}
+
+[ variáveis ]
+
+[ especificação dos cursores ]
+
+[ especificação dos módulos ]
+
+  [BEGIN
+     sequência_de_comandos
+   
+  [EXCEPTION
+     exceções ] ]
+
+END [nome_pacote ]; 
+
+
+Exemplo do corpo para o pacote de rh:
+CREATE OR REPLACE PACKAGE BODY rh
+ AS
+  FUNCTION descobrir_salario
+     (p_id IN emp.empno%TYPE)
+  RETURN NUMBER
+  IS
+     v_salario emp.sal%TYPE := 0;
+  BEGIN
+     SELECT sal INTO v_salario
+       FROM emp
+      WHERE empno = p_id;
+     RETURN v_salario;
+  END descobrir_salario;
+  PROCEDURE reajuste
+  (v_codigo_emp IN emp.empno%type,
+   v_porcentagem IN number DEFAULT 25)
+  IS
+  BEGIN
+  UPDATE emp
+     SET sal = sal + (sal *( v_porcentagem / 100 ) )
+   where empno = v_codigo_emp;
+  COMMIT;
+  END reajuste;
+END rh;
+/
+
+Exemplo de uso do pacote:
+SET SERVEROUTPUT ON
+DECLARE
+   v_sal NUMBER(8,2);
+BEGIN
+   v_sal := rh.descobrir_salario(7900);
+   DBMS_OUTPUT.PUT_LINE(v_sal);
+END;
+/
+
+
+
+
